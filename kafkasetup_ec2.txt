@@ -1,0 +1,71 @@
+Steps to setup Kafka in ec2 instance.
+
+--------------------------------------------------------------------------------------------------
+wget https://archive.apache.org/dist/kafka/3.3.1/kafka_2.12-3.3.1.tgz
+tar -xvf kafka_2.12-3.3.1.tgz
+sudo yum install java
+java -version
+cd kafka_2.12-3.3.1
+
+--------------------------------------------------------------------------------------------------
+Change server.properties so that it can run in public IP, it is pointing to private server for now,
+
+Do "vi config/server.properties" - change ADVERTISED_LISTENERS to public ip of the EC2 instance
+
+--------------------------------------------------------------------------------------------------
+
+To configure your EC2 security group for Kafka and Zookeeper access, follow these steps: 
+
+Go to security group
+
+Allow Kafka Broker Access:
+
+Type: Custom TCP
+Protocol: TCP
+Port Range: 9092
+Source: Anywhere-IPv4
+Allow Zookeeper Access:
+
+Type: Custom TCP
+Protocol: TCP
+Port Range: 2181
+Source: Anywhere-IPv4
+Optional - Allow ICMP (Ping) Access (if you can't ping your public IP):
+
+Type: All ICMP - IPv4
+Source: Anywhere-IPv4
+After updating the security group inbound rules, save the changes, then restart Zookeeper and Kafka.
+
+This configuration enables external access to the necessary ports for Kafka (9092), Zookeeper (2181), and allows ICMP for pinging.
+--------------------------------------------------------------------------------------------------
+Start Zoo-keeper:
+--------------------------------------------------------------------------------------------------
+bin/zookeeper-server-start.sh config/zookeeper.properties
+
+Open another window to start kafka
+But first ssh to to your ec2 machine as done above
+
+Start Kafka-server:
+--------------------------------------------------------------------------------------------------
+Duplicate the session & enter in a new console --
+export KAFKA_HEAP_OPTS="-Xmx512M -Xms128M" 
+cd kafka_2.12-3.3.1
+bin/kafka-server-start.sh config/server.properties
+
+
+Create the topic:
+--------------------------------------------------------------------------------------------------
+Duplicate the session & enter in a new console --
+cd kafka_2.12-3.3.1
+ec2-3-145-152-14.us-east-2.compute.amazonaws.com
+bin/kafka-topics.sh --create --topic demo_test --bootstrap-server 18.226.170.164:9092 --replication-factor 1 --partitions 1
+
+Start Producer:
+--------------------------------------------------------------------------------------------------
+bin/kafka-console-producer.sh --topic demo_test --bootstrap-server 18.226.170.164:9092
+
+Start Consumer:
+--------------------------------------------------------------------------------------------------
+Duplicate the session & enter in a new console --
+cd kafka_2.12-3.3.1
+bin/kafka-console-consumer.sh --topic demo_test --bootstrap-server 18.226.170.164:9092
